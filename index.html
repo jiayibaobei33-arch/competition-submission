@@ -1,132 +1,162 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Drum Machine with Words</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; background:#fafafa; }
-    h1, h2 { font-weight: 600; }
-    .pill { display:inline-block; margin:4px; padding:6px 10px; border-radius:16px;
-            background:#eee; cursor:pointer; }
-    .pill.active { background:#ffd966; font-weight:600; }
-    .pill.d2 { background:#cfe9ff; border:1px solid #87bfff; font-weight:600; }
-    video { max-width: 600px; border-radius: 8px; margin-top: 1em; }
-    #controls { margin-top: 1em; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Word-Powered Drum Machine</title>
+<style>
+  :root { --w: 980px; --fg:#111; --muted:#666; --bg:#fafafa; }
+  html,body { margin:0; padding:0; }
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  .wrap { max-width: var(--w); margin: 28px auto 64px; padding: 0 16px; }
+  h1 { font-size: 2.2rem; margin: 0 0 10px; }
+  h2 { margin: 28px 0 12px; }
+  p { margin: 10px 0; line-height: 1.55; }
+  .muted { color: var(--muted); }
+  .section { margin-top: 22px; }
+  /* inputs & buttons */
+  input[type="text"]{
+    width: 240px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px;
+  }
+  button{
+    padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;
+    background: #fff; cursor: pointer; margin-left: 6px;
+  }
+  button:hover{ background:#f3f3f3; }
+  /* word chips */
+  .pill{
+    display:inline-block; margin:4px; padding:6px 10px; border-radius: 999px;
+    background:#eee; cursor:pointer; border:1px solid #e1e1e1; user-select:none;
+  }
+  .pill.active { background:#ffe08a; border-color:#ffd458; font-weight:600; }
+  .pill.d2     { background:#d7ebff; border-color:#a9d0ff; }
+  /* responsive video iframe */
+  .video {
+    position: relative; width: 100%; max-width: 860px; aspect-ratio: 16/9;
+    background:#000; border-radius: 8px; overflow: hidden;
+  }
+  .video iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  /* lists */
+  .list { min-height: 40px; padding: 6px 0; }
+</style>
 </head>
 <body>
+<div class="wrap">
 
-<h1>Word-Powered Drum Machine</h1>
+  <h1>Word-Powered Drum Machine</h1>
+  <p>
+    We’re exploring a fun way to combine <strong>words</strong> with <strong>music</strong>.
+    Kids type a word; we fetch <strong>synonyms</strong> and <strong>antonyms</strong> to drive
+    sound changes — rhythm, brightness, tempo, and stereo panning.
+    The more words they activate, the more the beat evolves.
+  </p>
 
-<p>
-We’re exploring a fun way to combine **words** with **music**.
-Kids can type a word, and we fetch <strong>synonyms</strong> and <strong>antonyms</strong> 
-to drive sound changes — rhythm, brightness, tempo, and stereo panning.
-The more words they activate, the more the beat evolves.
-</p>
+  <div class="section">
+    <input id="q" type="text" placeholder="enter a word…" />
+    <button id="go">Suggest</button>
+    <p class="muted" style="margin-top:6px">Tip: click a word to toggle; <strong>Shift+Click</strong> to mark as dominant.</p>
+  </div>
 
-<div id="controls">
-  <input id="q" placeholder="enter a word…" />
-  <button id="go">Suggest</button>
-</div>
+  <div class="section">
+    <h2>Synonyms</h2>
+    <div id="syn" class="list"></div>
+  </div>
 
-<h2>Synonyms</h2>
-<div id="syn"></div>
+  <div class="section">
+    <h2>Antonyms</h2>
+    <div id="ant" class="list"></div>
+  </div>
 
-<h2>Antonyms</h2>
-<div id="ant"></div>
+  <div class="section">
+    <h2>How It Works</h2>
+    <p>
+      This site is built with <strong>HTML</strong>, <strong>CSS</strong>, and
+      <strong>JavaScript</strong>, hosted on <strong>GitHub Pages</strong>.
+      We use the <strong>Datamuse API</strong> to fetch synonyms and antonyms for the word you type.
+      Selected words become “chips” with a weight (regular or <em>dominant</em> via Shift+Click).
+    </p>
+    <p class="muted">
+      Next step: connect these weights to a Web Audio drum engine so words directly shape
+      tempo, density, brightness, and panning.
+    </p>
+  </div>
 
-<h2>How It Works</h2>
-<p>
-This project combines a simple web frontend (built with <strong>HTML</strong>, 
-<strong>CSS</strong>, and <strong>JavaScript</strong>) with a live coding 
-audio engine powered by <strong>ChucK</strong> and 
-<strong>ChuGL</strong>.
-</p>
-
-<p>
-The browser interface lets you type in words, which are sent through the 
-<strong>Datamuse API</strong> to fetch synonyms and antonyms. 
-These words are then forwarded to ChucK via <strong>OSC messages</strong>, 
-where they directly control musical parameters like rhythm, brightness, 
-and density. 
-ChuGL is used to render a simple graphical HUD that shows your active 
-synonyms and antonyms in sync with the beat.
-</p>
-
-<p>
-In the future, we will expand this into a full <em>word-driven drum machine</em>, 
-where words create rhythms, patterns, and dynamic visuals — making music 
-both playful and interactive.
-</p>
-
-
-<h2>Demo Video</h2>
-<div style="text-align:center;">
-  <iframe width="560" height="315"
-    src="https://www.youtube.com/embed/AHmi277GvrI"
-    title="Demo Video"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen>
-  </iframe>
-</div>
+    <div class="section">
+    <h2>Demo Video</h2>
+    <div class="video">
+      <iframe
+        src="https://www.youtube.com/embed/AHmi277GvrI"
+        title="Demo video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen></iframe>
+    </div>
+    <p class="muted" style="margin-top:8px">
+      We are currently exploring <strong>sound, graphics, and interactive design</strong>.  
+      Below is an example video we created to attract kids’ attention.
+    </p>
+  </div>
 
 
 <script>
-const synEl = document.getElementById('syn');
-const antEl = document.getElementById('ant');
-const qEl   = document.getElementById('q');
+  const synEl = document.getElementById('syn');
+  const antEl = document.getElementById('ant');
+  const qEl   = document.getElementById('q');
 
-let active = { syn: new Map(), ant: new Map() };
+  const active = { syn:new Map(), ant:new Map() };
 
-function renderPills(root, words, kind){
-  root.innerHTML = '';
-  words.forEach(w => {
-    const el = document.createElement('span');
-    el.textContent = w;
-    el.className = 'pill';
-    el.title = 'Click to toggle • Shift+Click = Dominant';
-    el.onclick = (ev) => {
-      const dominant = ev.shiftKey;
-      if (active[kind].has(w)) {
-        active[kind].delete(w);
-        el.classList.remove('active','d2');
-      } else {
-        active[kind].set(w, dominant ? 2 : 1);
-        el.classList.add('active');
-        if (dominant) el.classList.add('d2');
-      }
-      updateEngineParams();
-    };
-    root.appendChild(el);
-  });
-}
+  async function datamuse(type,q,max=10){
+    const url = `https://api.datamuse.com/words?${type}=${encodeURIComponent(q)}&max=${max}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('Datamuse failed'); return r.json();
+  }
 
-function updateEngineParams(){
-  // placeholder: log weights
-  console.log("SYN:", [...active.syn.entries()],
-              "ANT:", [...active.ant.entries()]);
-  // TODO: connect to audio engine later
-}
+  function renderPills(root, words, kind){
+    root.innerHTML = '';
+    words.forEach(w=>{
+      const el = document.createElement('span');
+      el.textContent = w;
+      el.className = 'pill';
+      el.title = 'Click to toggle • Shift+Click = Dominant';
+      el.onclick = (ev)=>{
+        const dominant = ev.shiftKey;
+        if(active[kind].has(w)){
+          active[kind].delete(w);
+          el.classList.remove('active','d2');
+        }else{
+          active[kind].set(w, dominant?2:1);
+          el.classList.add('active'); if(dominant) el.classList.add('d2');
+        }
+        // hook point: update audio engine parameters here
+        console.log('SYN', [...active.syn.entries()], 'ANT', [...active.ant.entries()]);
+      };
+      root.appendChild(el);
+    });
+  }
 
-async function suggest(){
-  const q = qEl.value.trim();
-  if(!q) return;
-  const syn = await fetch("https://api.datamuse.com/words?rel_syn=" + q)
-                     .then(r=>r.json());
-  const ant = await fetch("https://api.datamuse.com/words?rel_ant=" + q)
-                     .then(r=>r.json());
-  renderPills(synEl, syn.map(x=>x.word), "syn");
-  renderPills(antEl, ant.map(x=>x.word), "ant");
-}
+  async function suggest(){
+    const q = qEl.value.trim();
+    if(!q) return;
+    synEl.textContent = antEl.textContent = 'Loading…';
+    try{
+      const [syn, ant] = await Promise.all([
+        datamuse('rel_syn', q),
+        datamuse('rel_ant', q)
+      ]);
+      renderPills(synEl, syn.map(o=>o.word), 'syn');
+      renderPills(antEl, ant.map(o=>o.word), 'ant');
+    }catch(err){
+      synEl.textContent = antEl.textContent = 'Could not fetch suggestions.';
+      console.error(err);
+    }
+  }
 
-document.getElementById('go').onclick = suggest;
-qEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('go').click();
-});
+  document.getElementById('go').onclick = suggest;
+  qEl.addEventListener('keydown', e=>{ if(e.key==='Enter') suggest(); });
 </script>
-
 </body>
 </html>
 

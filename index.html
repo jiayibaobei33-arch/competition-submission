@@ -38,11 +38,28 @@ The more words they activate, the more the beat evolves.
 
 <h2>How It Works</h2>
 <p>
-When you type a word, we fetch related synonyms and antonyms from the Datamuse API.
-Each active word influences the music:
-stronger (dominant) words shift the beat more.
-Later, we’ll extend this into a full drum-with-words rhythm engine.
+This project combines a simple web frontend (built with <strong>HTML</strong>, 
+<strong>CSS</strong>, and <strong>JavaScript</strong>) with a live coding 
+audio engine powered by <strong>ChucK</strong> and 
+<strong>ChuGL</strong>.
 </p>
+
+<p>
+The browser interface lets you type in words, which are sent through the 
+<strong>Datamuse API</strong> to fetch synonyms and antonyms. 
+These words are then forwarded to ChucK via <strong>OSC messages</strong>, 
+where they directly control musical parameters like rhythm, brightness, 
+and density. 
+ChuGL is used to render a simple graphical HUD that shows your active 
+synonyms and antonyms in sync with the beat.
+</p>
+
+<p>
+In the future, we will expand this into a full <em>word-driven drum machine</em>, 
+where words create rhythms, patterns, and dynamic visuals — making music 
+both playful and interactive.
+</p>
+
 
 <h2>Video</h2>
 <p>

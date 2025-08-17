@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Etude: Poets of Sound — LLM Synonym/Antonym Drum-Machine</title>
+<style>
+  :root { --w: 900px; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.4;
+         margin: 32px auto; max-width: var(--w); padding: 0 16px; color: #111; }
+  h1, h2, h3 { margin: 0.8em 0 0.3em; }
+  .muted { color:#666; font-size: .95em; }
+  .section { margin: 28px 0; }
+  pre, code { background:#f6f8fa; border-radius:6px; }
+  pre { padding: 12px; overflow:auto; }
+  .pill { display:inline-block; padding:.25rem .6rem; border-radius: 999px; background:#efefef; margin:.2rem; cursor:pointer; }
+  .pill.active { background:#d1e7ff; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  video { max-width: 100%; border:1px solid #eee; border-radius: 6px; }
+  .box { border:1px solid #eee; border-radius:8px; padding:14px; }
+  button { cursor:pointer; }
+  .kbd { padding:2px 6px; border:1px solid #ccc; border-bottom-width:2px; border-radius:4px; background:white; }
+</style>
+</head>
+<body>
+
+<h1>Poets of Sound (LLM Edition)</h1>
+<p class="muted">
+A generative poetry drum‑machine that mixes <b>synonyms</b> and <b>antonyms</b> of a keyword into rhythm.
+This page is self‑contained (static, GitHub Pages friendly). No keys. Synonyms/antonyms via the Datamuse API.
+</p>
+
+<div class="section">
+  <h2>Abstract</h2>
+  <p>
+  We extend the “Poets of Sound &amp; Time” etude by adding a language‑aware layer:
+  type a <b>keyword</b>, the system proposes <b>synonyms</b> and <b>opposites</b>. Selected words interact to
+  shape <i>density</i>, <i>tempo</i>, <i>panning</i>, and <i>brightness</i> of a simple Web‑Audio drum engine.
+  Conceptually, synonyms “reinforce” (increase density/brightness), while antonyms “oppose” (thin/invert).
+  </p>
+</div>
+
+<div class="section">
+  <h2>Demo</h2>
+  <div class="box">
+    <div class="row">
+      <div>
+        <label>Keyword:</label>
+        <input id="q" placeholder="e.g., calm, storm, fire, gentle…" style="width:260px" />
+        <button id="go">Suggest</button>
+        <button id="start">Start Audio</button>
+        <button id="stop">Stop</button>
+        <div id="status" class="muted" style="margin-top:6px;"></div>
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <h3>Synonyms</h3>
+            <div id="syn"></div>
+          </div>
+          <div>
+            <h3>Antonyms</h3>
+            <div id="ant"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <!-- Optional: include a demo video named demo.mp4 -->
+        <video controls src="demo.mp4" onerror="this.outerHTML='<div class=&quot;muted&quot;>Add demo.mp4 to show a video here.</div>'"></video>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:10px;">
+      Tip: click pills to toggle. Hold <span class="kbd">Shift</span> while clicking to mark a word as “dominant”.
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Source Files</h2>
+  <ul>
+    <li><code>index.html</code>: this page (UI + Web Audio + word logic).</li>
+    <li><code>demo.mp4</code> (optional): your performance video.</li>
+    <li><code>samples/</code> (optional): drop your own kick/snare if you prefer samples over synth.</li>
+  </ul>
+  <p><b>Download:</b> use the GitHub “Code → Download ZIP” button.</p>
+</div>
+
+<div class="section">
+  <h2>Build / Run</h2>
+  <ol>
+    <li>There is no build. Just open this page or host on GitHub Pages.</li>
+    <li>Audio runs in the browser. Click <b>Start Audio</b> once (autoplay policies).</li>
+  </ol>
+  <p class="muted">
+    If you want a ChucK/TTS version like the original etude, keep this page as your landing page and link to your repo with build notes.
+  </p>
+</div>
+
+<div class="section">
+  <h2>Controls</h2>
+  <ul>
+    <li><b>Keyword</b> → suggests words; click to select/deselect.</li>
+    <li><b>Start/Stop</b> → start/stop the drum engine.</li>
+    <li><b>Shift+Click</b> on a word → make it dominant (higher weight).</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>How It Works (LLM-ish Layer)</h2>
+  <p>
+    For a keyword <code>q</code> we fetch <b>synonyms</b> and <b>antonyms</b> 
+    from the Datamuse API (<code>/words?rel_syn=</code> and <code>/words?rel_ant=</code>).
+    Each active word <code>w</code> gets a weight (1, or 2 if dominant). We compute:
+  </p>
+  <pre>
+density  = clamp( 0.35 + 0.08 * (#syn_active weights) - 0.06 * (#ant_active weights) )
+tempoBPM = clamp( 88  + 4 * (#syn) - 3 * (#ant), 60, 150 )
+brightness = base + 0.12 * synWeight - 0.10 * antWeight
+pan moves toward synonyms (right) vs antonyms (left)
+  </pre>
+  <p>
+    This mirrors the “words react with sound” idea. If you later add a real LLM,
+    hit your own endpoint (serverless) and return richer metadata (embeddings, polarity, arousal) to drive more parameters.
+  </p>
+</div>
+
+<hr/>
+
+<p class="muted">© 2025 — Your Name. For academic/demo use.</p>
+
+<script>
+/* -------------------- word suggestions (no key) -------------------- */
+async function datamuse(type, q, max=8){
+  const url = `https://api.datamuse.com/words?${type}=${encodeURIComponent(q)}&max=${max}`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('datamuse failed');
+  return await r.json(); // [{word, score, ...}]
+}
+const qEl = document.getElementById('q');
+const synEl = document.getElementById('syn');
+const antEl = document.getElementById('ant');
+const statusEl = document.getElementById('status');
+document.getElementById('go').onclick = async () => {
+  const q = qEl.value.trim();
+  synEl.innerHTML = antEl.innerHTML = '';
+  if(!q) return;
+  setStatus('Fetching…');
+  try {
+    const [syn, ant] = await Promise.all([datamuse('rel_syn', q), datamuse('rel_ant', q)]);
+    renderPills(synEl, syn.map(o=>o.word), 'syn');
+    renderPills(antEl, ant.map(o=>o.word), 'ant');
+    setStatus(`Got ${syn.length} synonyms, ${ant.length} antonyms for “${q}”. Click to activate.`);
+  } catch(e){
+    setStatus('Error fetching words. Try another keyword or check network.');
+    console.error(e);
+  }
+};
+function setStatus(s){ statusEl.textContent = s; }
+const active = { syn: new Map(), ant: new Map() }; // word -> weight (1 or 2)
+function renderPills(root, words, kind){
+  words.forEach(w => {
+    const el = document.createElement('span');
+    el.textContent = w; el.className = 'pill';
+    el.onclick = (ev) => {
+      const dominant = ev.shiftKey;
+      if(active[kind].has(w)){ active[kind].delete(w); el.classList.remove('active'); }
+      else { active[kind].set(w, dominant ? 2 : 1); el.classList.add('active'); }
+      updateEngineParams();
+    };
+    root.appendChild(el);
+  });
+}
+
+/* -------------------- tiny drum engine (Web Audio) -------------------- */
+let ac, playing=false, nextTime=0, timer;
+const state = { tempo: 96, density: .4, bright: .4, pan: 0 }; // -1..1
+document.getElementById('start').onclick = () => { if(!playing) start(); };
+document.getElementById('stop').onclick  = () => { stop(); };
+
+function start(){
+  ac = new (window.AudioContext||window.webkitAudioContext)();
+  playing = true; nextTime = ac.currentTime + 0.05;
+  schedule();
+  setStatus('Audio running. Click words to change the groove.');
+}
+function stop(){
+  playing = false; clearTimeout(timer);
+  if(ac) ac.close();
+  setStatus('Stopped.');
+}
+
+// schedule in small chunks
+function schedule(){
+  if(!playing) return;
+  const lookahead = 0.1; // seconds
+  while(nextTime < ac.currentTime + lookahead){
+    tick(nextTime);
+    nextTime += 60/state.tempo/2; // 8th notes
+  }
+  timer = setTimeout(schedule, 25);
+}
+
+// one step: stochastic hits controlled by density/bright/pan
+function tick(t){
+  // kick on downbeats more likely; snare on upbeats
+  const step = Math.round((t*state.tempo/60*2)) % 8;
+  const isDown = (step % 4===0);
+  const kickProb = clamp(state.density + (isDown?0.25:0), 0, 1);
+  const snrProb  = clamp(state.density - (isDown?0.05:0), 0, 1);
+
+  if(Math.random() < kickProb) synthKick(t, 100 + 50*state.bright, 0.15);
+  if(Math.random() < snrProb)  synthSnare(t, 0.12, state.pan);
+}
+
+// simple synth drums so we don't need samples
+function synthKick(t, freq, dur){
+  const o = ac.createOscillator(); o.type='sine';
+  const g = ac.createGain(); g.gain.setValueAtTime(0.9, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(40, t+dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur);
+}
+function synthSnare(t, dur, pan){
+  const n = noiseNode(); const bp = ac.createBiquadFilter(); bp.type='highpass'; bp.frequency.value = 1000 + 3000*state.bright;
+  const g = ac.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  const p = (ac.createStereoPanner)? ac.createStereoPanner(): null;
+  if(p){ p.pan.value = pan; n.connect(bp).connect(g).connect(p).connect(ac.destination); }
+  else { n.connect(bp).connect(g).connect(ac.destination); }
+  n.start(t); n.stop(t+dur);
+}
+function noiseNode(){
+  const b = ac.createBuffer(1, ac.sampleRate*0.2, ac.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const src = ac.createBufferSource(); src.buffer = b; return src;
+}
+function clamp(v,min=0,max=1){ return Math.max(min, Math.min(max, v)); }
+
+/* -------------------- word→sound mapping -------------------- */
+function updateEngineParams(){
+  const synW = sumMap(active.syn);   // total synonym weight
+  const antW = sumMap(active.ant);   // total antonym weight
+
+  state.density = clamp(0.35 + 0.08*synW - 0.06*antW, 0.05, 0.95);
+  state.tempo   = Math.max(60, Math.min(150, 88 + 4*synW - 3*antW));
+  state.bright  = clamp(0.4 + 0.12*synW - 0.10*antW, 0, 1);
+  const panRaw  = clamp((synW - antW)/6, -1, 1); // -1..1
+  state.pan     = panRaw;
+  setStatus(`tempo ${state.tempo} bpm • density ${state.density.toFixed(2)} • bright ${state.bright.toFixed(2)} • pan ${state.pan.toFixed(2)}`);
+}
+function sumMap(m){ let s=0; for(const v of m.values()) s+=v; return s; }
+</script>
+
+</body>
+</html>
